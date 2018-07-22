@@ -1,5 +1,5 @@
 /*
- * Metro 4 Components Library v4.2.8 build 684 (https://metroui.org.ua)
+ * Metro 4 Components Library v4.2.14 build 691 (https://metroui.org.ua)
  * Copyright 2018 Sergey Pimenov
  * Licensed under MIT
  */
@@ -80,7 +80,8 @@ var isTouch = (('ontouchstart' in window) || (navigator.MaxTouchPoints > 0) || (
 
 var Metro = {
 
-    version: "4.2.8.684 ",
+    version: "4.2.14",
+    versionFull: "4.2.14.691 ",
     isTouchable: isTouch,
     fullScreenEnabled: document.fullscreenEnabled,
     sheet: null,
@@ -202,12 +203,16 @@ var Metro = {
 
     hotkeys: [],
 
-    about: function(){
-        console.log("Metro 4 Components Library - v"+this.version);
+    about: function(f){
+        console.log("Metro 4 Components Library - v" + (f === true ? this.versionFull : this.version));
     },
 
-    ver: function(){
-        return this.version;
+    aboutDlg: function(f){
+        alert("Metro 4 Components Library - v" + (f === true ? this.versionFull : this.version));
+    },
+
+    ver: function(f){
+        return (f === true ? this.versionFull : this.version);
     },
 
     observe: function(){
@@ -289,7 +294,7 @@ var Metro = {
             }
         });
 
-        this.about();
+        this.about(true);
 
         return this;
     },
@@ -3291,11 +3296,7 @@ var d = new Date().getTime();
     },
 
     inViewport: function(el){
-        if (typeof jQuery === "function" && el instanceof jQuery) {
-            el = el[0];
-        }
-
-        var rect = el.getBoundingClientRect();
+        var rect = this.rect(el);
 
         return (
             rect.top >= 0 &&
@@ -3303,6 +3304,16 @@ var d = new Date().getTime();
             rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
             rect.right <= (window.innerWidth || document.documentElement.clientWidth)
         );
+    },
+
+    rect: function(el){
+        if (typeof jQuery === "function" && el instanceof jQuery) {
+            el = el[0];
+        }
+
+        var rect = el.getBoundingClientRect();
+
+        return rect;
     },
 
     objectLength: function(obj){
@@ -3739,6 +3750,18 @@ var d = new Date().getTime();
 
     parseMoney: function(val){
         return Number(parseFloat(val.replace(/[^0-9-.]/g, '')));
+    },
+
+    isVisible: function(el){
+        if (this.isJQueryObject(el)) {
+            el = el[0];
+        }
+
+        return this.getStyleOne(el, "display") !== "none" && this.getStyleOne(el, "visibility") !== "hidden" && el.offsetParent !== null;
+    },
+
+    parseNumber: function(val, thousand, decimal){
+        return val.replace(new RegExp('\\'+thousand, "g"), "").replace(new RegExp('\\'+decimal, 'g'), ".");
     }
 };
 
@@ -4901,18 +4924,15 @@ var Calendar = {
         }
 
         if (o.minDate !== null && Utils.isDate(o.minDate)) {
-            this.min = new Date(o.minDate);
-            this.min.setHours(0,0,0,0);
+            this.min = (new Date(o.minDate)).addHours(this.offset);
         }
 
         if (o.maxDate !== null && Utils.isDate(o.maxDate)) {
-            this.max = new Date(o.maxDate);
-            this.max.setHours(0,0,0,0);
+            this.max = (new Date(o.maxDate)).addHours(this.offset);
         }
 
         if (o.show !== null && Utils.isDate(o.show)) {
-            this.show = new Date(o.show);
-            this.show.setHours(0,0,0,0);
+            this.show = (new Date(o.show)).addHours(this.offset);
             this.current = {
                 year: this.show.getFullYear(),
                 month: this.show.getMonth(),
@@ -5313,10 +5333,10 @@ var Calendar = {
                     if (this.exclude.indexOf(s.getTime()) !== -1) {
                         d.addClass("disabled excluded").addClass(o.clsExcluded);
                     }
-                    if (this.min !== null && s.getTime() < this.min.getTime()) {
+                    if (this.min !== null && s < this.min) {
                         d.addClass("disabled excluded").addClass(o.clsExcluded);
                     }
-                    if (this.max !== null && s.getTime() > this.max.getTime()) {
+                    if (this.max !== null && s > this.max) {
                         d.addClass("disabled excluded").addClass(o.clsExcluded);
                     }
                 } else {
@@ -5415,12 +5435,12 @@ var Calendar = {
             }
         }
 
-        var day_height = element.find(".day:nth-child(1)").css('width');
+        //var day_height = Utils.getStyleOne(element.parent().find(".calendar .days"), 'width');
 
-        element.find(".days-row .day").css({
-            height: day_height,
-            lineHeight: day_height
-        });
+        // element.find(".days-row .day").css({
+        //     height: day_height,
+        //     lineHeight: day_height + 'px'
+        // });
     },
 
     _drawCalendar: function(){
@@ -8267,9 +8287,23 @@ var DatePicker = {
         var picker = this.picker;
         var m = this.value.getMonth(), d = this.value.getDate() - 1, y = this.value.getFullYear();
         var m_list, d_list, y_list;
+        var select_wrapper = picker.find(".select-wrapper");
+        var select_wrapper_in_viewport, select_wrapper_rect;
 
-        picker.find(".select-wrapper").show();
+        select_wrapper.parent().removeClass("for-top for-bottom");
+        select_wrapper.show();
         picker.find("li").removeClass("active");
+
+        select_wrapper_in_viewport = Utils.inViewport(select_wrapper);
+        select_wrapper_rect = Utils.rect(select_wrapper);
+
+        if (!select_wrapper_in_viewport && select_wrapper_rect.top > 0) {
+            select_wrapper.parent().addClass("for-bottom");
+        }
+
+        if (!select_wrapper_in_viewport && select_wrapper_rect.top < 0) {
+            select_wrapper.parent().addClass("for-top");
+        }
 
         if (o.month === true) {
             m_list = picker.find(".sel-month");
@@ -9499,7 +9533,7 @@ var Hint = {
         this.hint = hint;
         this.hint_size = Utils.hiddenElementSize(hint);
 
-        $(".hint").remove();
+        $(".hint:not(.permanent-hint)").remove();
 
         if (elem.tagName === 'TD' || elem.tagName === 'TH') {
             var wrp = $("<div/>").css("display", "inline-block").html(element.html());
@@ -10483,6 +10517,10 @@ var List = {
     },
 
     options: {
+
+        thousandSeparator: ",",
+        decimalSeparator: ",",
+
         sortTarget: "li",
         sortClass: null,
         sortDir: "asc",
@@ -11036,6 +11074,11 @@ var List = {
         data = (""+data).toLowerCase().replace(/[\n\r]+|[\s]{2,}/g, ' ').trim();
 
         if (Utils.isValue(format)) {
+
+            if (['number', 'int', 'float', 'money'].indexOf(format) !== -1 && (o.thousandSeparator !== "," || o.decimalSeparator !== "." )) {
+                data = Utils.parseNumber(data, o.thousandSeparator, o.decimalSeparator);
+            }
+
             switch (format) {
                 case "date": data = Utils.isDate(data) ? new Date(data) : ""; break;
                 case "number": data = Number(data); break;
@@ -13588,6 +13631,7 @@ var Select = {
         this.options = $.extend( {}, this.options, options );
         this.elem  = elem;
         this.element = $(elem);
+        this.list = null;
 
         this._setOptionsFromDOM();
         this._create();
@@ -13617,7 +13661,7 @@ var Select = {
     },
 
     _setOptionsFromDOM: function(){
-        var that = this, element = this.element, o = this.options;
+        var element = this.element, o = this.options;
 
         $.each(element.data(), function(key, value){
             if (key in o) {
@@ -13748,6 +13792,7 @@ var Select = {
                 }
             });
 
+            this.list = list;
         }
 
         if (o.prepend !== "") {
@@ -13774,7 +13819,7 @@ var Select = {
     },
 
     _createEvents: function(){
-        var that = this, element = this.element, o = this.options;
+        var element = this.element, o = this.options;
         var container = element.closest(".select");
         var drop_container = container.find(".drop-container");
         var input = element.siblings("input");
@@ -13842,19 +13887,36 @@ var Select = {
     },
 
     val: function(v){
-        var that = this, element = this.element;
+        var element = this.element, o = this.options;
         var input = element.siblings("input");
         var options = element.find("option");
+        var items = this.list.find("li");
+
         if (v === undefined) {
             return element.val();
         }
+
         options.removeAttr("selected");
         $.each(options, function(){
-            var op = $(this);
-            if (this.value == v) {
-                op.attr("selected", "selected");
-                input.val(this.text);
+            var op = this;
+
+            if (""+op.value === ""+v) {
+                op.setAttribute("selected", "selected");
+                input.val(op.text);
                 element.trigger("change");
+
+                items.removeClass("active");
+                $.each(items, function(){
+                    var item = $(this);
+
+                    if (item.hasClass("group-title")) return ;
+
+                    if (""+item.data("value") === ""+v) {
+                        item.addClass("active");
+                    }
+                });
+
+                Utils.exec(o.onChange, [v], element[0]);
             }
         });
     },
@@ -13863,7 +13925,7 @@ var Select = {
         var that = this, element = this.element;
         var select = element.parent();
         var list = select.find("ul");
-        var option, option_group;
+        var option_group;
 
         element.html("");
         list.html("");
@@ -13897,7 +13959,7 @@ var Select = {
     },
 
     destroy: function(){
-        var that = this, element = this.element;
+        var element = this.element;
         var container = element.closest(".select");
         var drop_container = container.find(".drop-container");
         var input = element.siblings("input");
@@ -13920,7 +13982,7 @@ var Select = {
     }
 };
 
-$(document).on(Metro.events.click, function(e){
+$(document).on(Metro.events.click, function(){
     var selects = $(".select .drop-container");
     $.each(selects, function(){
         $(this).data('dropdown').close();
@@ -14260,7 +14322,7 @@ var Slider = {
         if (o.hintAlways === true) {
             hint.css({
                 display: "block"
-            });
+            }).addClass("permanent-hint");
         }
 
         element.appendTo(slider);
@@ -14397,6 +14459,8 @@ var Slider = {
             case "prc2pix": return Math.round( v / ( 100 / length ));
             case "val2pix": return Math.round( this._convert(this._convert(v, 'val2prc'), 'prc2pix') );
         }
+
+        return 0;
     },
 
     _correct: function(value){
@@ -14482,12 +14546,31 @@ var Slider = {
         var slider = this.slider, o = this.options;
         var marker = slider.find(".marker"), complete = slider.find(".complete");
         var length = o.vertical === true ? slider.outerHeight() : slider.outerWidth();
+        var marker_size = parseInt(Utils.getStyleOne(marker, "width"));
+        var slider_visible = Utils.isVisible(slider);
+
+        if (slider_visible) {
+            marker.css({
+                'margin-top': 0,
+                'margin-left': 0
+            });
+        }
 
         if (o.vertical === true) {
-            marker.css('top', length - this.pixel);
+            if (slider_visible) {
+                marker.css('top', length - this.pixel);
+            } else {
+                marker.css('top', this.percent + "%");
+                marker.css('margin-top', this.percent === 0 ? 0 : -1 * marker_size / 2);
+            }
             complete.css('height', this.percent+"%");
         } else {
-            marker.css('left', this.pixel);
+            if (slider_visible) {
+                marker.css('left', this.pixel);
+            } else {
+                marker.css('left', this.percent + "%");
+                marker.css('margin-left', this.percent === 0 ? 0 : -1 * marker_size / 2);
+            }
             complete.css('width', this.percent+"%");
         }
     },
@@ -14608,6 +14691,8 @@ var Sorter = {
     },
 
     options: {
+        thousandSeparator: ",",
+        decimalSeparator: ",",
         sortTarget: null,
         sortSource: null,
         sortDir: "asc",
@@ -14675,6 +14760,11 @@ var Sorter = {
         data = (""+data).toLowerCase().replace(/[\n\r]+|[\s]{2,}/g, ' ').trim();
 
         if (Utils.isValue(format)) {
+
+            if (['number', 'int', 'float', 'money'].indexOf(format) !== -1 && (o.thousandSeparator !== "," || o.decimalSeparator !== "." )) {
+                data = Utils.parseNumber(data, o.thousandSeparator, o.decimalSeparator);
+            }
+
             switch (format) {
                 case "date": data = Utils.isDate(data) ? new Date(data) : ""; break;
                 case "number": data = Number(data); break;
@@ -15557,7 +15647,7 @@ var Streamer = {
 
         o.data = new_data;
 
-        this.data = new_data;
+        this.data = JSON.parse(o.data);
         this.build();
 
         element.trigger("datachanged");
@@ -15727,7 +15817,7 @@ var Table = {
         showSearch: true,
         showTableInfo: true,
         showPagination: true,
-        showAllPages: false,
+        paginationShortMode: true,
         showActivity: true,
 
         muteTable: true,
@@ -15736,12 +15826,15 @@ var Table = {
         rowsSteps: "10,25,50,100",
 
         sortDir: "asc",
+        decimalSeparator: ".",
+        thousandSeparator: ",",
 
         tableRowsCountTitle: "Show entries:",
         tableSearchTitle: "Search:",
         tableInfoTitle: "Showing $1 to $2 of $3 entries",
         paginationPrevTitle: "Prev",
         paginationNextTitle: "Next",
+        allRecordsTitle: "All",
 
         activityType: "cycle",
         activityStyle: "color",
@@ -15825,6 +15918,8 @@ var Table = {
     _build: function(data){
         var element = this.element, o = this.options;
 
+        o.rows = parseInt(o.rows);
+
         if (Utils.isValue(data)) {
             this._createItemsFromJSON(data);
         } else {
@@ -15880,7 +15975,8 @@ var Table = {
                 sortable: item.hasClass("sortable-column"),
                 sortDir: dir,
                 clsColumn: Utils.isValue(item.data("cls-column")) ? item.data("cls-column") : "",
-                cls: item_class
+                cls: item_class,
+                colspan: item.attr("colspan")
             };
             that.heads.push(head_item);
         });
@@ -15892,7 +15988,8 @@ var Table = {
             foot_item = {
                 title: item.html(),
                 name: Utils.isValue(item.data("name")) ? item.data("name") : false,
-                cls: item[0].className
+                cls: item[0].className,
+                colspan: item.attr("colspan")
             };
 
             that.foots.push(foot_item);
@@ -15966,9 +16063,11 @@ var Table = {
             if (item.cls !== undefined) {
                 th.addClass(item.cls);
             }
-            if (item.clsColumn !== undefined) {
-                th.addClass(item.clsColumn);
+
+            if (Utils.isValue(item.colspan)) {
+                th.attr("colspan", item.colspan);
             }
+
             th.addClass(o.clsHeadCell);
         });
 
@@ -16005,8 +16104,8 @@ var Table = {
                 th.addClass(item.cls);
             }
 
-            if (Utils.isValue(that.heads[i].clsColumn)) {
-                th.addClass(that.heads[i].clsColumn);
+            if (Utils.isValue(item.colspan)) {
+                th.attr("colspan", item.colspan);
             }
 
             th.appendTo(tr);
@@ -16035,8 +16134,9 @@ var Table = {
 
         rows_select = $("<select>").appendTo(rows_block);
         $.each(Utils.strToArray(o.rowsSteps), function () {
-            var option = $("<option>").attr("value", this).text(this).appendTo(rows_select);
-            if (parseInt(this) === parseInt(o.rows)) {
+            var val = parseInt(this);
+            var option = $("<option>").attr("value", val).text(val === -1 ? o.allRecordsTitle : val).appendTo(rows_select);
+            if (val === parseInt(o.rows)) {
                 option.attr("selected", "selected");
             }
         });
@@ -16044,7 +16144,8 @@ var Table = {
             filter: false,
             prepend: o.tableRowsCountTitle,
             onChange: function (val) {
-                if (parseInt(val) === parseInt(o.rows)) {
+                val = parseInt(val);
+                if (val === parseInt(o.rows)) {
                     return;
                 }
                 o.rows = val;
@@ -16081,7 +16182,7 @@ var Table = {
 
     _createStructure: function(){
         var that = this, element = this.element, o = this.options;
-        var table_component, sortable_columns;
+        var table_component, columns;
         var w_search = $(o.searchWrapper), w_info = $(o.infoWrapper), w_rows = $(o.rowsWrapper), w_paging = $(o.paginationWrapper);
 
         if (w_search.length > 0) {this.wrapperSearch = w_search;}
@@ -16130,9 +16231,9 @@ var Table = {
         });
 
         if (need_sort) {
-            sortable_columns = element.find(".sortable-column");
-            this._resetSortClass(sortable_columns);
-            $(sortable_columns.get(this.sort.colIndex)).addClass("sort-"+this.sort.dir);
+            columns = element.find("thead th");
+            this._resetSortClass(columns);
+            $(columns.get(this.sort.colIndex)).addClass("sort-"+this.sort.dir);
             this.sorting();
         }
 
@@ -16305,6 +16406,10 @@ var Table = {
             return ;
         }
 
+        if (o.rows === -1) {
+            return ;
+        }
+
         this.pagesCount = Math.ceil(length / o.rows);
 
         var add_item = function(item_title, item_type, data){
@@ -16323,7 +16428,7 @@ var Table = {
 
         pagination.append(add_item(1, that.currentPage === 1 ? "active" : "", 1));
 
-        if (o.showAllPages === true || this.pagesCount <= 7) {
+        if (o.paginationShortMode !== true || this.pagesCount <= 7) {
             for (i = 2; i < this.pagesCount; i++) {
                 pagination.append(add_item(i, i === that.currentPage ? "active" : "", i));
             }
@@ -16373,10 +16478,12 @@ var Table = {
         var that = this, element = this.element, o = this.options;
         var body = element.find("tbody");
         var i;
-        var start = o.rows === -1 ? 0 : o.rows * (this.currentPage - 1),
-            stop = o.rows === -1 ? this.items.length - 1 : start + o.rows - 1;
+        var start = parseInt(o.rows) === -1 ? 0 : o.rows * (this.currentPage - 1),
+            stop = parseInt(o.rows) === -1 ? this.items.length - 1 : start + o.rows - 1;
         var items;
         var flt, idx = -1;
+
+        console.log(start, stop, this.currentPage, o.rows, this.items.length);
 
         body.html("");
 
@@ -16418,17 +16525,20 @@ var Table = {
         }
 
         for (i = start; i <= stop; i++) {
-            var tr = $("<tr>").addClass(o.clsBodyRow);
-            if (items[i] !== undefined) $.each(items[i], function(cell_i){
-                var td = $("<td>").html(this);
-                td.addClass(o.clsBodyCell);
-                if (that.heads[cell_i].clsColumn !== undefined) {
-                    td.addClass(that.heads[cell_i].clsColumn);
-                }
-                td.appendTo(tr);
-            });
-            tr.appendTo(body);
-            Utils.exec(o.onDrawRow, [tr], element[0]);
+            var tr;
+            if (Utils.isValue(items[i])) {
+                tr = $("<tr>").addClass(o.clsBodyRow);
+                $.each(items[i], function(cell_i){
+                    var td = $("<td>").html(this);
+                    td.addClass(o.clsBodyCell);
+                    if (that.heads[cell_i].clsColumn !== undefined) {
+                        td.addClass(that.heads[cell_i].clsColumn);
+                    }
+                    td.appendTo(tr);
+                });
+                tr.appendTo(body);
+                Utils.exec(o.onDrawRow, [tr], element[0]);
+            }
         }
 
         this._info(start + 1, stop + 1, items.length);
@@ -16446,10 +16556,16 @@ var Table = {
     _getItemContent: function(row){
         var result, col = row[this.sort.colIndex];
         var format = this.heads[this.sort.colIndex].format;
+        var o = this.options;
 
         result = (""+col).toLowerCase().replace(/[\n\r]+|[\s]{2,}/g, ' ').trim();
 
-        if (format !== undefined) {
+        if (Utils.isValue(format)) {
+
+            if (['number', 'int', 'float', 'money'].indexOf(format) !== -1 && (o.thousandSeparator !== "," || o.decimalSeparator !== "." )) {
+                result = Utils.parseNumber(result, o.thousandSeparator, o.decimalSeparator);
+            }
+
             switch (format) {
                 case "date": result = Utils.isDate(result) ? new Date(result) : ""; break;
                 case "number": result = Number(result); break;
@@ -16468,7 +16584,6 @@ var Table = {
 
     sorting: function(dir){
         var that = this, element = this.element, o = this.options;
-        var items;
 
         if (dir !== undefined && dir !== null) {
             this.sort.dir = dir;
@@ -16748,6 +16863,7 @@ var Tabs = {
 
         element.on(Metro.events.click, "a", function(e){
             var link = $(this);
+            var href = link.attr("href");
             var tab = link.parent("li");
 
             if (element.data('expanded') === true) {
@@ -16755,8 +16871,15 @@ var Tabs = {
                 element.data('expanded', false);
                 container.find(".hamburger").removeClass("active");
             }
-            if (Utils.exec(o.onBeforeTab, [tab, element], tab[0]) === true) that._open(tab);
-            e.preventDefault();
+
+            if (Utils.exec(o.onBeforeTab, [tab, element], tab[0]) !== true) {
+                return false;
+            }
+
+            if (!Utils.isUrl(href)) {
+                that._open(tab);
+                e.preventDefault();
+            }
         });
     },
 
@@ -16765,8 +16888,8 @@ var Tabs = {
         var tabs = element.find("li");
 
         $.each(tabs, function(){
-            var target = $(this).find("a").attr("href");
-            if (target && target !== "#") {
+            var target = $(this).find("a").attr("href").trim();
+            if (target.length > 1 && target[0] === "#") {
                 that._targets.push(target);
             }
         });
@@ -16802,7 +16925,8 @@ var Tabs = {
         }
 
         $.each(this._targets, function(){
-            $(this).hide();
+            var t = $(this);
+            if (t.length > 0) t.hide();
         });
 
         if (target !== "#") {
@@ -17491,10 +17615,12 @@ var TimePicker = {
         var that  = this, element = this.element, o = this.options;
         var picker = this.picker;
         var h, m, s;
-        var h_list, m_list, s_list, a_list;
+        var h_list, m_list, s_list;
+        var select_wrapper = picker.find(".select-wrapper");
+        var items = picker.find("li");
 
-        picker.find(".select-wrapper").show();
-        picker.find("li").removeClass("active");
+        select_wrapper.show();
+        items.removeClass("active");
 
         if (o.hours === true) {
             h = this.value[0];
@@ -19200,7 +19326,7 @@ var Window = {
             if (o.modal === true) {
                 win.siblings(".overlay").remove();
             }
-            Utils.exec(o.onCloseClick(), [win], element[0]);
+            Utils.exec(o.onCloseClick, [win], element[0]);
             Utils.exec(o.onWindowDestroy, [win], element[0]);
             if (o.closeAction === Metro.actions.REMOVE) {
                 win.remove();
