@@ -12,19 +12,15 @@ namespace MyWeb.Controllers
         {
             return View();
         }
-
-        public ActionResult About()
+        public JsonResult getjson()
         {
-            ViewBag.Message = "Your application description page.";
-
-            return View();
+            
+            var jsondata=Json(Math.PI,JsonRequestBehavior.AllowGet);
+            return jsondata;
         }
-
-        public ActionResult Contact()
-        {
-            ViewBag.Message = "Your contact page.";
-
-            return View();
-        }
+        public JsonResult GetAllKeys() =>Json(Request.ServerVariables.AllKeys,JsonRequestBehavior.AllowGet);
+        public string Getip() => Request.ServerVariables["REMOTE_ADDR"];
+        public string Getip2() => Request.UserHostAddress;
+       
     }
 }
