@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZWeb", "MyWeb\ZWeb.csproj",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ZWeb.Tests", "MyWeb.Tests\ZWeb.Tests.csproj", "{D8AD47A5-213B-423F-A772-2C967F3B50D8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dao", "Dao\Dao.csproj", "{192E6478-8D7C-4004-825B-2F058C4DC01F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Service", "Service\Service.csproj", "{51D64262-9A91-4969-AC74-678862069E11}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{D8AD47A5-213B-423F-A772-2C967F3B50D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D8AD47A5-213B-423F-A772-2C967F3B50D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D8AD47A5-213B-423F-A772-2C967F3B50D8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{192E6478-8D7C-4004-825B-2F058C4DC01F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{192E6478-8D7C-4004-825B-2F058C4DC01F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{192E6478-8D7C-4004-825B-2F058C4DC01F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{192E6478-8D7C-4004-825B-2F058C4DC01F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{51D64262-9A91-4969-AC74-678862069E11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{51D64262-9A91-4969-AC74-678862069E11}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{51D64262-9A91-4969-AC74-678862069E11}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{51D64262-9A91-4969-AC74-678862069E11}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
