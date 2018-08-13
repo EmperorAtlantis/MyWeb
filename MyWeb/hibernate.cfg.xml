@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+This template was written to work with NHibernate.Test.
+Copy the template to your NHibernate.Test project folder and rename it in hibernate.cfg.xml and change it 
+for your own use before compile tests in VisualStudio.
+-->
+<!-- This is the System.Data.dll provider for SQL Server -->
+<hibernate-configuration  xmlns="urn:nhibernate-configuration-2.2" >
+  <session-factory name="NHibernate.Test">
+    <!--数据库驱动类型-->
+    <property name="connection.driver_class">NHibernate.Driver.SqlClientDriver</property>
+    <!--数据库连接字符串-->
+    <property name="connection.connection_string">
+      Server=.;database=Demo;uid=sa;pwd=root;       <!--initial catalog=nhibernate;Integrated Security=SSPI;-->
+    </property>
+    <!--在控制台显示SQL-->
+    <property name="show_sql">true</property>
+    <property name="dialect">NHibernate.Dialect.MsSql2012Dialect</property>
+    <!--指定映射文档中所在程序集-->
+    <mapping  assembly="NH.Domain"/>
+  </session-factory>
+</hibernate-configuration>
